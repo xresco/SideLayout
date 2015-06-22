@@ -8,7 +8,7 @@
     <fragment
         android:id="@+id/CustomLayoutFragment"
         android:layout_alignParentRight="true"
-        android:name="com.abed.cobi.View.CustomLayoutFragment"
+        android:name="com.abed.cobi.View.SideLayout"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         />

@@ -17,7 +17,7 @@ import com.abed.cobi.R;
 import com.abed.cobi.View.Components.RotatableFrameLayout;
 
 
-public class CustomLayoutFragment extends Fragment implements RotatableFrameLayout.OnRotateListener{
+public class SideLayout extends Fragment implements RotatableFrameLayout.OnRotateListener{
 
 
     RotatableFrameLayout rotatable_layout;
@@ -26,7 +26,7 @@ public class CustomLayoutFragment extends Fragment implements RotatableFrameLayo
     int[] imgs_adapter={R.drawable.c1,R.drawable.c2,R.drawable.c3,R.drawable.c4};
     String[] txts_adapter={"Stone","Meditation","Sea","Sleep"};
 
-    public CustomLayoutFragment() {
+    public SideLayout() {
         // Required empty public constructor
     }
 
