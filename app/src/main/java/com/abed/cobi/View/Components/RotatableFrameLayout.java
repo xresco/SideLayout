@@ -17,13 +17,17 @@ import android.widget.FrameLayout;
 public class RotatableFrameLayout extends FrameLayout implements View.OnTouchListener{
 
     boolean isBeingAnimated=false;
-    private float downX, downY, upX, upY;
+    private float downX, downY, upX, upY,firstY;
     private OnRotateListener rotateListener;
     private int rotation_step=0;
+    private int rotationOffset=60;
+    private int prev_angle;
+    private boolean rotation_started=false;
 
     public RotatableFrameLayout(Context context, AttributeSet attrs) {
         super(context, attrs);
         this.setOnTouchListener(this);
+        prev_angle=(int)this.getRotation();
     }
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec){
@@ -34,63 +38,78 @@ public class RotatableFrameLayout extends FrameLayout implements View.OnTouchLis
 
 
     public boolean onTouch(View v, MotionEvent event) {
-        final int MIN_DISTANCE = 20;
         switch(event.getAction()){
             case MotionEvent.ACTION_DOWN: {
                 downX = event.getRawX();
                 downY = event.getRawY();
+                firstY = event.getRawY();
+
 
                 return true;
             }
-            case MotionEvent.ACTION_UP: {
-                upX = event.getRawX();
+            case MotionEvent.ACTION_MOVE: {
                 upY = event.getRawY();
-
-                float deltaX = downX - upX;
                 float deltaY = downY - upY;
+                float totalDeltaY = firstY - upY;
+                if(Math.abs(totalDeltaY)>300)
+                if(!rotation_started && rotateListener!=null) {
+                    rotateListener.onRotateStarted();
+                    rotation_started=true;
+                }
 
-                // swipe vertical?
-                if(Math.abs(deltaY)> MIN_DISTANCE){
-                    if(!isBeingAnimated) {
-
-                        int angle = 0;
-                        // top or down
-                        if (deltaY < 0) {
-                            angle = -90;
-                            rotation_step--;
-                        }
-                        if (deltaY > 0) {
-                            angle = 90;
-                            rotation_step++;
-                        }
-
-                        this.animate().rotationBy(angle)
-                                .setListener(new Animator.AnimatorListener() {
-                                    @Override
-                                    public void onAnimationStart(Animator animation) {
-                                        isBeingAnimated = true;
-                                        if(rotateListener!=null)
-                                            rotateListener.onRotateStarted();
-                                    }
-                                    @Override
-                                    public void onAnimationEnd(Animator animation) {
-                                        isBeingAnimated = false;
-                                        if(rotateListener!=null)
-                                            rotateListener.onRotate(rotation_step);
-                                    }
-                                    @Override
-                                    public void onAnimationCancel(Animator animation) {}
-                                    @Override
-                                    public void onAnimationRepeat(Animator animation) {}
-                                })
-                                .start();
-                    }
-                    return true;
-                } else { Log.i("Log::", "Swipe was only " + Math.abs(deltaX) + " long, need at least " + MIN_DISTANCE); }
-                     return true;
+                int angle=(int)((deltaY*90)/(float)getHeight());
+                rotate(angle);
+                downY=upY;
+                return true;
+            }
+            case MotionEvent.ACTION_UP: {
+                balanceRotate();
+                return true;
             }
         }
         return true;
+    }
+
+    public void rotate(int angle)
+    {
+        this.setRotation(this.getRotation()+angle);
+    }
+
+    public void balanceRotate(){
+        rotation_started=false;
+        float angle=getRotation();
+        int nearest_angle=Math.round((angle-rotationOffset)/90)*90+rotationOffset;
+
+        this.animate().rotation(nearest_angle)
+                .setListener(new Animator.AnimatorListener() {
+                    @Override
+                    public void onAnimationStart(Animator animation) {
+                        isBeingAnimated = true;
+                    }
+
+                    @Override
+                    public void onAnimationEnd(Animator animation) {
+                        isBeingAnimated = false;
+                        if (rotateListener != null) {
+                            int new_angle=(int)RotatableFrameLayout.this.getRotation();
+                            if(new_angle>prev_angle)
+                                rotation_step++;
+                            if(new_angle<prev_angle)
+                                rotation_step--;
+                            prev_angle=new_angle;
+                            rotateListener.onRotate(rotation_step);
+                        }
+                    }
+
+                    @Override
+                    public void onAnimationCancel(Animator animation) {
+                    }
+
+                    @Override
+                    public void onAnimationRepeat(Animator animation) {
+                    }
+                })
+                .start();
     }
 
     public void setRotateListener(OnRotateListener rotateListener) {
